@@ -1,25 +1,28 @@
 export enum HeadType {
-    Speed,
-    Route
+  Speed,
+  MiniSpeed,
+  Route,
+  TrackLimit,
+  GradeTime,
 }
 
 export enum RouteDirection {
-    Straight,
-    Divert
+  Straight,
+  Divert,
 }
 
 export interface SpeedLight {
-    blocksClear: number;
-    canPassRed: boolean;
+  blocksClear: number;
+  canPassRed: boolean;
 }
 
 export interface RouteLight {
-    direction: RouteDirection;
-    isAnnounce: boolean;
+  direction: RouteDirection;
+  isAnnounce: boolean;
 }
 
 export interface LightData {
-    color: string;
-    flashing: boolean;
-    out: boolean;
+  color: string;
+  flashing: boolean;
+  out: boolean;
 }
