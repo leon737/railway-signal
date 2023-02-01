@@ -12,8 +12,11 @@
 <script setup lang="ts">
 import SignalHead from "./SignalHead.vue";
 import Sign from "./Sign.vue";
-import { HeadType, SignalConfig, SignalData } from "../types";
-import { computed, ref } from "vue";
+import { SignalConfig, SignalData } from "../types";
+import { computed } from "vue";
+import useSignal from '../useSignal'
+
+const {getHeads} = useSignal()
 
 const props = defineProps<{
   config: SignalConfig;
@@ -22,24 +25,8 @@ const props = defineProps<{
 
 const letter = computed(() => props.config.sign);
 const signVisible = computed(() => !!props.config.sign);
-
-const heads = computed(() => {
-  const result: HeadType[] = []
-  if (props.config.hasTrackLimitHead) {
-    result.push(HeadType.TrackLimit)
-    result.push(HeadType.MiniSpeed)
-  }
-  else {
-    result.push(HeadType.Speed)
-  }
-  if (props.config.hasRouteHead) {
-    result.push(HeadType.Route)
-  }
-  if (props.config.hasGradeTimerHead) {
-    result.push(HeadType.GradeTime)
-  }
-  return result
-})
+const signalConfig = computed(() => props.config)
+const heads = getHeads(signalConfig)
 
 </script>
 <style scoped>

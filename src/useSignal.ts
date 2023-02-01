@@ -7,6 +7,29 @@ const GREEN = '#0F0'
 const WHITE = '#FFF'
 
 export default function() {
+    const getHeads = (config: Ref<SignalConfig>) => {
+        return computed(() => {
+            const result: HeadType[] = []
+            if (config.value.hasTrackLimitHead) {
+              result.push(HeadType.TrackLimit)
+              result.push(HeadType.MiniSpeed)
+            }
+            else {
+              result.push(HeadType.Speed)
+            }
+            if (config.value.hasRouteHead) {
+              result.push(HeadType.Route)
+            }
+            if (config.value.isRouteAnnouce) {
+                result.push(HeadType.RouteAnnouce)
+            }
+            if (config.value.hasGradeTimerHead || config.value.isGradeTimerAnnounce) {
+              result.push(HeadType.GradeTime)
+            }
+            return result
+          })
+    }
+
     const getHead = (headType: Ref<HeadType>, config: Ref<SignalConfig>, data: Ref<SignalData>) => {
         return computed(() => {
             switch(headType.value) {
@@ -20,13 +43,16 @@ export default function() {
                     return [makeLight(GREEN, isRouteLightOn(config.value, data.value, RouteDirection.Straight), isRouteLightFlashing(config.value, RouteDirection.Straight)), 
                         makeLight(YELLOW,isRouteLightOn(config.value, data.value, RouteDirection.Divert), isRouteLightFlashing(config.value, RouteDirection.Divert)), 
                         makeLight(RED, isRouteLightOn(config.value, data.value, RouteDirection.None), isRouteLightFlashing(config.value, RouteDirection.None))]
+                case HeadType.RouteAnnouce:
+                    return [makeLight(YELLOW, isRouteAnnounceLightOn(config.value, data.value, RouteDirection.Divert), isRouteAnnounceLightFlashing(config.value, data.value, RouteDirection.Divert)), 
+                        makeLight(RED,isRouteAnnounceLightOn(config.value, data.value, RouteDirection.None), isRouteAnnounceLightFlashing(config.value, data.value, RouteDirection.None))]
                 case HeadType.Speed:
                     return [makeLight(RED, isSpeedLimitExtraRedLightOn(config.value, data.value), isSpeedLimitExtraRedLightFlashing()), 
                         makeLight(GREEN, isSpeedLightOn(data.value, 2), isSpeedLightFlashing(config.value, data.value, 2)), 
                         makeLight(YELLOW, isSpeedLightOn(data.value, 1), isSpeedLightFlashing(config.value, data.value, 1)), 
                         makeLight(RED, isSpeedLightOn(data.value, 0), isSpeedLightFlashing(config.value, data.value, 0))]
                 case HeadType.GradeTime:
-                    return [makeLight(WHITE, isGradeTimeWhiteLightOn(data.value), isGradeTimeWhiteLightFlashing(config.value))]
+                    return [makeLight(WHITE, isGradeTimeWhiteLightOn(data.value), isGradeTimeWhiteLightFlashing(config.value, data.value))]
             }
         })
     }
@@ -78,30 +104,48 @@ export default function() {
     }
 
     const isRouteLightOn = (config: SignalConfig, data: SignalData, direction: RouteDirection): boolean => {
-        const canPass = data.canPassRed || (config.hasGradeTimerHead && data.gradeTimerOn)
+        const canPass = checkCanPass(config, data)
         switch(direction) {
             case RouteDirection.None:
                 return  data.blocksClear < 1 && !canPass
             case RouteDirection.Straight:
-                return data.direction == RouteDirection.Straight && !config.isRouteAnnouce && (data.blocksClear > 0 || canPass)
+                return data.direction == RouteDirection.Straight && canPass
             case RouteDirection.Divert:
-                return data.direction == RouteDirection.Divert && (data.blocksClear > 0 || canPass)
+                return data.direction == RouteDirection.Divert && canPass
         }
     }
 
     const isRouteLightFlashing = (config: SignalConfig, direction: RouteDirection): boolean => {
-        return config.isRouteAnnouce && direction != RouteDirection.None
+        return false
+    }
+
+    const isRouteAnnounceLightOn = (config: SignalConfig, data: SignalData, direction: RouteDirection): boolean => {
+        const canPass = checkCanPass(config, data)
+        switch(direction) {
+            case RouteDirection.None:
+                return !data.canPassNextSignal && canPass
+            case RouteDirection.Straight:
+                return false
+            case RouteDirection.Divert:
+                return data.announceDirection == RouteDirection.Divert && (data.blocksClear > 1 || canPass) && data.canPassNextSignal
+        }
+    }
+
+    const isRouteAnnounceLightFlashing = (config: SignalConfig, data: SignalData, direction: RouteDirection): boolean => {
+        return true
     }
 
     const isGradeTimeWhiteLightOn = (data: SignalData): boolean => {
-        return data.gradeTimerOn && data.blocksClear < 2
+        return (data.gradeTimerOn && data.blocksClear < 2) || (data.announceGradeTimerOn && data.blocksClear > 0 && data.blocksClear < 3)
     }
 
-    const isGradeTimeWhiteLightFlashing = (config: SignalConfig): boolean => {
-        return config.isGradeTimerAnnounce
+    const isGradeTimeWhiteLightFlashing = (config: SignalConfig, data: SignalData): boolean => {
+        return config.isGradeTimerAnnounce && data.announceGradeTimerOn
     }
 
+    const checkCanPass = (config: SignalConfig, data: SignalData) => {
+        return  data.blocksClear > 0 || data.canPassRed || (config.hasGradeTimerHead && data.gradeTimerOn)
+    }
 
-
-    return {getHead}
+    return {getHeads, getHead, checkCanPass}
 }

@@ -3,7 +3,7 @@
       <input type="checkbox" v-model="showRepeaters" /> Show repeaters
       <div class="signals">
         <div v-for="(signal, index) in signals" class="signal">
-          <input type="checkbox" :checked="blocked[index]" @change="onUpdateBlocked(index)" />
+          <input type="checkbox" v-model="blocked[index]" />
           <input type="checkbox" v-model="hasRouteHead[index]" />
           <input type="checkbox" v-model="diversion[index]" />
           <input type="checkbox" v-model="hasTrackLimitHead[index]" />
@@ -27,24 +27,18 @@
     </div>
 </template>
 <script setup lang="ts">
-  import { computed, reactive, ref } from "vue";
+  import { computed, ref } from "vue";
   import Signal from "../components/Signal.vue";
   import { RouteDirection, SignalConfig, SignalData } from "../types";
+  import useSignal from "../useSignal";
+
+  const {checkCanPass} = useSignal()
 
   const showRepeaters = ref(true)
   
   const COUNT = 12
 
   const blocked = ref(new Array(COUNT).fill(false))
-  const onUpdateBlocked = (index: number) => {
-    for(let i = 0; i < blocked.value.length; ++i) {
-      if (i != index) {
-        blocked.value[i] = false
-      }
-    }
-    blocked.value[index] = true
-  }
-
   const hasRouteHead = ref(new Array(COUNT).fill(false))
   const diversion = ref(new Array(COUNT).fill(false))
   const hasTrackLimitHead = ref(new Array(COUNT).fill(false))
@@ -69,9 +63,9 @@
     for(let i = 0; i < COUNT; ++i) {
       result.push({
         ...model, 
-        hasRouteHead: hasRouteHead.value[i] || hasRouteHead.value[i + 1],
+        hasRouteHead: hasRouteHead.value[i],
         hasTrackLimitHead: hasTrackLimitHead.value[i],
-        hasGradeTimerHead: hasGradeTimerHead.value[i] || hasGradeTimerHead.value[i + 1],
+        hasGradeTimerHead: hasGradeTimerHead.value[i],
         isRouteAnnouce: hasRouteHead.value[i + 1],
         isGradeTimerAnnounce: hasGradeTimerHead.value[i + 1],
         sign: (hasRouteHead.value[i + 1] ? 'A' : '') + (hasGradeTimerHead.value[i + 1] ? 'S' : '')
@@ -90,16 +84,33 @@
   })
   
   const data = computed(() => {
+    const getBlocksAhead = (blocked: boolean[], index: number) => {
+      let result = 0
+      for (let i = index; i <= COUNT; ++i) {
+        if (blocked[i]) {
+          break
+        }
+        result++
+      }
+      return result
+    }
+
     const result: SignalData[] = []
-    const blockedIndex = blocked.value.findIndex(x => !!x)
     for(let i = 0; i < signals.value.length; ++i) {
+      const blocksAhead = getBlocksAhead(blocked.value, i)
       result.push({
-      blocksClear: i < blockedIndex ? blockedIndex - i : 0,
-      canPassRed: canPassRed.value[i],
-      direction: diversion.value[signals.value[i].isRouteAnnouce ? i + 1 : i] ? RouteDirection.Divert : RouteDirection.Straight,
-      gradeTimerOn: gradeTimerOn.value[signals.value[i].isGradeTimerAnnounce ? i + 1 : i],
-      slowTrack: slowTrack.value[i]
+        blocksClear: blocksAhead,
+        canPassRed: canPassRed.value[i],
+        direction: diversion.value[i] ? RouteDirection.Divert : RouteDirection.Straight,
+        announceDirection: signals.value[i].isRouteAnnouce ? (diversion.value[i + 1] ? RouteDirection.Divert : RouteDirection.Straight) : RouteDirection.None,
+        gradeTimerOn: gradeTimerOn.value[i],
+        slowTrack: slowTrack.value[i],
+        announceGradeTimerOn: signals.value[i].isGradeTimerAnnounce ? gradeTimerOn.value[i + 1] : false,
+        canPassNextSignal: false
       })
+    }
+    for (let i = 0; i < result.length - 1; ++i) {
+      result[i].canPassNextSignal = checkCanPass(signals.value[i + 1], result[i + 1])
     }
     return result
   })

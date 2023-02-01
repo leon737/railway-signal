@@ -2,6 +2,7 @@ export enum HeadType {
   Speed,
   MiniSpeed,
   Route,
+  RouteAnnouce,
   TrackLimit,
   GradeTime,
 }
@@ -34,4 +35,7 @@ export interface SignalData {
   direction: RouteDirection;
   gradeTimerOn: boolean;
   slowTrack: boolean;
+  announceGradeTimerOn: boolean;
+  announceDirection: RouteDirection;
+  canPassNextSignal: boolean;
 }
