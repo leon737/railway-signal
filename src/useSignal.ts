@@ -140,7 +140,7 @@ export default function() {
     }
 
     const isGradeTimeWhiteLightFlashing = (config: SignalConfig, data: SignalData): boolean => {
-        return config.isGradeTimerAnnounce && data.announceGradeTimerOn
+        return config.isGradeTimerAnnounce && data.announceGradeTimerOn && !data.gradeTimerOn
     }
 
     const checkCanPass = (config: SignalConfig, data: SignalData) => {
