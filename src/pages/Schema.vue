@@ -2,6 +2,16 @@
     <div>
       <input type="checkbox" v-model="showRepeaters" /> Show repeaters
       <div class="signals">
+        <div class="signal" style="line-height:1.18rem;text-align:right;">
+          <span>BLOCK</span>
+          <span>ROUTE</span>
+          <span>DIVERT</span>
+          <span>TLH</span>
+          <span>SLOW</span>
+          <span>GTH</span>
+          <span>TIMER</span>
+          <span>PASS</span>
+        </div>
         <div v-for="(signal, index) in signals" class="signal">
           <input type="checkbox" v-model="blocked[index]" />
           <input type="checkbox" v-model="hasRouteHead[index]" />
