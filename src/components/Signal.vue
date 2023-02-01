@@ -20,7 +20,7 @@ const props = defineProps<{
   data: SignalData;
 }>();
 
-const letter = ref(props.config.sign);
+const letter = computed(() => props.config.sign);
 const signVisible = computed(() => !!props.config.sign);
 
 const heads = computed(() => {
