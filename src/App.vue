@@ -2,75 +2,10 @@
   <div>
     <div class="signals">
       <Signal
-        :blocksClear="blocksClearNumber"
-        :direction="routeDirection"
-        :isRepeater="true"
-        :numberOfHeads="1"
-        :canPassRed="canPassRed"
-        :hasTrackLimitHead="hasTrackLimitHead"
-        :slowTrack="slowTrack"
-      />
-      <Signal
-        :blocksClear="blocksClearNumber"
-        :direction="routeDirection"
-        :numberOfHeads="1"
-        :canPassRed="canPassRed"
-        :hasTrackLimitHead="hasTrackLimitHead"
-        :slowTrack="slowTrack"
-        :gradeTimer="gradeTimer"
-        :gradeTimerOn="gradeTimerOn"
-      />
-      <Signal
-        :blocksClear="blocksClearNumber + 1"
-        :direction="routeDirection"
-        :numberOfHeads="1"
-        :canPassRed="canPassRed"
-        :isAnnounce="true"
-        :hasTrackLimitHead="hasTrackLimitHead"
-        :slowTrack="slowTrack"
-        :gradeTimer="gradeTimer"
-        :gradeTimerOn="gradeTimerOn"
-      />
-      <Signal
-        :blocksClear="blocksClearNumber + 1"
-        :direction="routeDirection"
-        :isRepeater="true"
-        :numberOfHeads="1"
-        :canPassRed="canPassRed"
-        :isAnnounce="true"
-        :hasTrackLimitHead="hasTrackLimitHead"
-        :slowTrack="slowTrack"
-      />
-      <Signal
-        :blocksClear="blocksClearNumber + 1"
-        :direction="routeDirection"
-        :numberOfHeads="2"
-        :canPassRed="canPassRed"
-        :isAnnounce="true"
-        :hasTrackLimitHead="hasTrackLimitHead"
-        :slowTrack="slowTrack"
-        :gradeTimer="gradeTimer"
-        :gradeTimerOn="gradeTimerOn"
-      />
-      <Signal
-        :blocksClear="blocksClearNumber"
-        :direction="routeDirection"
-        :isRepeater="true"
-        :numberOfHeads="2"
-        :canPassRed="canPassRed"
-        :hasTrackLimitHead="hasTrackLimitHead"
-        :slowTrack="slowTrack"
-      />
-      <Signal
-        :blocksClear="blocksClearNumber"
-        :direction="routeDirection"
-        :numberOfHeads="2"
-        :canPassRed="canPassRed"
-        :hasTrackLimitHead="hasTrackLimitHead"
-        :slowTrack="slowTrack"
-        :gradeTimer="gradeTimer"
-        :gradeTimerOn="gradeTimerOn"
-      />
+        v-for="signal in signals"
+        :config="signal"
+        :data="data"
+      />      
     </div>
     <div>
       <select v-model="blocksClear">
@@ -93,9 +28,9 @@
   </div>
 </template>
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, reactive, ref } from "vue";
 import Signal from "./components/Signal.vue";
-import { RouteDirection } from "./types";
+import { RouteDirection, SignalConfig, SignalData } from "./types";
 
 const blocksClear = ref(0);
 const blocksClearNumber = computed(() => +blocksClear.value);
@@ -110,6 +45,93 @@ const hasTrackLimitHead = ref(true);
 const slowTrack = ref(true);
 const gradeTimer = ref(true);
 const gradeTimerOn = ref(true);
+
+const signals = computed(() => {
+  const result: SignalConfig[] = [  
+    {
+      isRepeater: false,
+      hasRouteHead: false,
+      isRouteAnnouce: true,
+      isGradeTimerAnnounce: false,
+      hasTrackLimitHead: hasTrackLimitHead.value,
+      hasGradeTimerHead: gradeTimer.value,
+      sign: 'A'
+    },
+    {
+      isRepeater: false,
+      hasRouteHead: false,
+      isRouteAnnouce: false,
+      isGradeTimerAnnounce: true,
+      hasTrackLimitHead: hasTrackLimitHead.value,
+      hasGradeTimerHead: gradeTimer.value,
+      sign: 'S'
+    },
+    {
+      isRepeater: true,
+      hasRouteHead: false,
+      isRouteAnnouce: true,
+      isGradeTimerAnnounce: false,
+      hasTrackLimitHead: hasTrackLimitHead.value,
+      hasGradeTimerHead: false,
+      sign: 'R'
+    },
+    {
+      isRepeater: false,
+      hasRouteHead: false,
+      isRouteAnnouce: false,
+      isGradeTimerAnnounce: false,
+      hasTrackLimitHead: hasTrackLimitHead.value,
+      hasGradeTimerHead: gradeTimer.value,
+      sign: ''
+    },
+    {
+      isRepeater: false,
+      hasRouteHead: true,
+      isRouteAnnouce: true,
+      isGradeTimerAnnounce: false,
+      hasTrackLimitHead: hasTrackLimitHead.value,
+      hasGradeTimerHead: gradeTimer.value,
+      sign: 'A'
+    },
+    {
+      isRepeater: false,
+      hasRouteHead: true,
+      isRouteAnnouce: false,
+      isGradeTimerAnnounce: true,
+      hasTrackLimitHead: hasTrackLimitHead.value,
+      hasGradeTimerHead: gradeTimer.value,
+      sign: 'S'
+    },
+    {
+      isRepeater: true,
+      hasRouteHead: true,
+      isRouteAnnouce: true,
+      isGradeTimerAnnounce: false,
+      hasTrackLimitHead: hasTrackLimitHead.value,
+      hasGradeTimerHead: false,
+      sign: 'R'
+    },
+    {
+      isRepeater: false,
+      hasRouteHead: true,
+      isRouteAnnouce: false,
+      isGradeTimerAnnounce: false,
+      hasTrackLimitHead: hasTrackLimitHead.value,
+      hasGradeTimerHead: gradeTimer.value,
+      sign: ''
+    }
+  ]
+  return result
+})
+
+const data = computed(() => ({
+  blocksClear: blocksClear.value,
+  canPassRed: canPassRed.value,
+  direction: routeDirection.value,
+  gradeTimerOn: gradeTimerOn.value,
+  slowTrack: slowTrack.value
+} as SignalData))
+
 </script>
 
 <style scoped>
