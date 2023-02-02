@@ -20,7 +20,7 @@ export interface LightData {
 }
 
 export interface SignalConfig {
-  isRepeater: boolean;
+  isBrl: boolean;
   hasRouteHead: boolean;
   isRouteAnnouce: boolean;
   isGradeTimerAnnounce: boolean;
