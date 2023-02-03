@@ -12,6 +12,10 @@ const YELLOW = "yellow";
 const GREEN = "#0F0";
 const WHITE = "#FFF";
 
+const RED_SPEED_LIGHT = {light: RED, index: 0}
+const YELLOW_SPEED_LIGHT = {light: YELLOW, index: 1}
+const GREEN_SPEED_LIGHT = {light: GREEN, index: 2}
+
 export default function () {
   const getHeads = (config: Ref<SignalConfig>) => {
     return computed(() => {
@@ -51,23 +55,12 @@ export default function () {
             ),
           ];
         case HeadType.MiniSpeed:
-          return [
-            makeLight(
-              GREEN,
-              isSpeedLightOn(config.value, data.value, 2),
-              isSpeedLightFlashing(config.value, data.value, 2)
-            ),
-            makeLight(
-              YELLOW,
-              isSpeedLightOn(config.value, data.value, 1),
-              isSpeedLightFlashing(config.value, data.value, 1)
-            ),
-            makeLight(
-              RED,
-              isSpeedLightOn(config.value, data.value, 0),
-              isSpeedLightFlashing(config.value, data.value, 0)
-            ),
-          ];
+            return (config.value.isBrl ? [YELLOW_SPEED_LIGHT, RED_SPEED_LIGHT, GREEN_SPEED_LIGHT] : [GREEN_SPEED_LIGHT, YELLOW_SPEED_LIGHT, RED_SPEED_LIGHT]).map(v => 
+                makeLight(
+                    v.light,
+                    isSpeedLightOn(config.value, data.value, v.index),
+                    isSpeedLightFlashing(config.value, data.value, v.index)
+                ));          
         case HeadType.Route:
           return [
             makeLight(
@@ -116,28 +109,18 @@ export default function () {
             ),
           ];
         case HeadType.Speed:
-          return [
-            makeLight(
-              RED,
-              isSpeedLimitExtraRedLightOn(config.value, data.value),
-              isSpeedLimitExtraRedLightFlashing()
-            ),
-            makeLight(
-              GREEN,
-              isSpeedLightOn(config.value, data.value, 2),
-              isSpeedLightFlashing(config.value, data.value, 2)
-            ),
-            makeLight(
-              YELLOW,
-              isSpeedLightOn(config.value, data.value, 1),
-              isSpeedLightFlashing(config.value, data.value, 1)
-            ),
-            makeLight(
-              RED,
-              isSpeedLightOn(config.value, data.value, 0),
-              isSpeedLightFlashing(config.value, data.value, 0)
-            ),
-          ];
+            return [
+                makeLight(
+                    RED,
+                    isSpeedLimitExtraRedLightOn(config.value, data.value),
+                    isSpeedLimitExtraRedLightFlashing()
+                  ), 
+                ...(config.value.isBrl ? [YELLOW_SPEED_LIGHT, RED_SPEED_LIGHT, GREEN_SPEED_LIGHT] : [GREEN_SPEED_LIGHT, YELLOW_SPEED_LIGHT, RED_SPEED_LIGHT]).map((v, i) => 
+                makeLight(
+                    v.light,
+                    isSpeedLightOn(config.value, data.value, v.index),
+                    isSpeedLightFlashing(config.value, data.value, v.index)
+                ))];          
         case HeadType.GradeTime:
           return [
             makeLight(
@@ -183,10 +166,16 @@ export default function () {
     index: number
   ): boolean => {
     const blocksClear = config.isBrl
-      ? Math.max(Math.min(data.blocksClear, 4), 0)
+      ? Math.max(Math.min(data.blocksClear, 6), 0)
       : Math.max(Math.min(data.blocksClear, 2), 0);
     if (config.isBrl) {
-      return Math.floor(blocksClear / 2) == index;
+        if (blocksClear == 5) {
+            return index == GREEN_SPEED_LIGHT.index || index == YELLOW_SPEED_LIGHT.index
+        }
+        if (blocksClear > 5) {
+            return index == GREEN_SPEED_LIGHT.index
+        }
+        return Math.floor(blocksClear / 2) == index;
     } else {
       return blocksClear == index;
     }
@@ -200,7 +189,7 @@ export default function () {
     if (config.isBrl) {
       if (
         data.blocksClear > 0 &&
-        (data.blocksClear > 4 || data.blocksClear % 2 == 1)
+        (data.blocksClear > 5 || data.blocksClear % 2 == 1)
       ) {
         return true;
       }
