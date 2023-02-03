@@ -1,14 +1,19 @@
 <template>
   <div>
-    <input type="checkbox" v-model="isBrl" /> Block Reducted Length
+    <select v-model="signalType">
+      <option value="normal">Normal</option>
+      <option value="brl">BRL</option>
+      <option value="uniform">Uniform</option>
+      <option value="uniformSmart">Uniform Smart</option>
+    </select>
     <div class="signals">
       <div class="signal" style="line-height: 1.18rem; text-align: right">
         <span>BLOCK</span>
         <span>ROUTE</span>
         <span>DIVERT</span>
-        <span>TLH</span>
+        <span v-if="!isUniform">TLH</span>
         <span>SLOW</span>
-        <span>GTH</span>
+        <span v-if="!isUniform">GTH</span>
         <span>TIMER</span>
         <span>PASS</span>
       </div>
@@ -16,9 +21,9 @@
         <input type="checkbox" v-model="blocked[index]" />
         <input type="checkbox" v-model="hasRouteHead[index]" />
         <input type="checkbox" v-model="diversion[index]" />
-        <input type="checkbox" v-model="hasTrackLimitHead[index]" />
+        <input v-if="!isUniform" type="checkbox" v-model="hasTrackLimitHead[index]" />
         <input type="checkbox" v-model="slowTrack[index]" />
-        <input type="checkbox" v-model="hasGradeTimerHead[index]" />
+        <input v-if="!isUniform" type="checkbox" v-model="hasGradeTimerHead[index]" />
         <input type="checkbox" v-model="gradeTimerOn[index]" />
         <input type="checkbox" v-model="canPassRed[index]" />
         <div class="two_signals">
@@ -38,7 +43,10 @@ const { checkCanPass } = useSignal();
 
 const COUNT = 20;
 
-const isBrl = ref(true);
+const signalType = ref('normal');
+
+const isUniform = computed(() => signalType.value.includes('uniform'))
+
 const blocked = ref(new Array(COUNT).fill(false));
 const hasRouteHead = ref(new Array(COUNT).fill(false));
 const diversion = ref(new Array(COUNT).fill(false));
@@ -50,7 +58,9 @@ const canPassRed = ref(new Array(COUNT).fill(false));
 
 const signals = computed(() => {
   const model: SignalConfig = {
-    isBrl: isBrl.value,
+    isBrl: signalType.value == 'brl',
+    isUniform: isUniform.value,
+    isUniformSmart: signalType.value == 'uniformSmart',
     hasRouteHead: false,
     isRouteAnnouce: false,
     isGradeTimerAnnounce: false,

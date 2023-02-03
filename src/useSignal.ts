@@ -6,6 +6,7 @@ import {
   SignalConfig,
   SignalData,
 } from "./types";
+import useUniformSignal from "./useUniformSignal";
 
 const RED = "red";
 const YELLOW = "yellow";
@@ -17,8 +18,13 @@ const YELLOW_SPEED_LIGHT = {light: YELLOW, index: 1}
 const GREEN_SPEED_LIGHT = {light: GREEN, index: 2}
 
 export default function () {
+  const {getHeads: getUniformHeads, getHead: getUniformHead} = useUniformSignal()
+
   const getHeads = (config: Ref<SignalConfig>) => {
     return computed(() => {
+      if (config.value.isUniform) {
+        return getUniformHeads(config).value
+      }
       const result: HeadType[] = [];
       if (config.value.hasTrackLimitHead) {
         result.push(HeadType.TrackLimit);
@@ -45,6 +51,9 @@ export default function () {
     data: Ref<SignalData>
   ) => {
     return computed(() => {
+      if (config.value.isUniform) {
+        return getUniformHead(headType, config, data).value;
+      }
       switch (headType.value) {
         case HeadType.TrackLimit:
           return [

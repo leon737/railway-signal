@@ -5,6 +5,7 @@ export enum HeadType {
   RouteAnnouce,
   TrackLimit,
   GradeTime,
+  Uniform5
 }
 
 export enum RouteDirection {
@@ -21,6 +22,8 @@ export interface LightData {
 
 export interface SignalConfig {
   isBrl: boolean;
+  isUniform: boolean;
+  isUniformSmart: boolean;
   hasRouteHead: boolean;
   isRouteAnnouce: boolean;
   isGradeTimerAnnounce: boolean;
