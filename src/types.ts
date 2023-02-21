@@ -41,4 +41,5 @@ export interface SignalData {
   announceGradeTimerOn: boolean;
   announceDirection: RouteDirection;
   canPassNextSignal: boolean;
+  announceBlocksAhead: number | null
 }

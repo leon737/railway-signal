@@ -34,7 +34,7 @@ export default function() {
             } while (!mappings.length && blocksClear >= 0)
 
             mappings = data.value.direction == RouteDirection.Divert ? fallbackFilter(mappings, x => !!x.divert) : mappings
-            mappings = data.value.announceDirection == RouteDirection.Divert ? fallbackFilter(mappings, x => !!x.announce) : mappings
+            mappings = !!data.value.announceBlocksAhead ? fallbackFilter(mappings, x => x.announce === data.value.announceBlocksAhead) : mappings
 
             const mapping = mappings.length > 0 ? mappings[0] : Uniform5Mapping[0]
             const code = mapping.code

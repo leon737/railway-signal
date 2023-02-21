@@ -34,7 +34,7 @@ export default function(options: GetSignalConfigOptions, settings: GetSignalConf
             isGradeTimerAnnounce: false,
             hasTrackLimitHead: false,
             hasGradeTimerHead: false,
-            sign: "",
+            sign: ""
           };
         
           const result: SignalConfig[] = [];
@@ -88,6 +88,7 @@ export default function(options: GetSignalConfigOptions, settings: GetSignalConf
                     ? settings.gradeTimerOn.value[i + 1]
                     : false,
                   canPassNextSignal: false,
+                  announceBlocksAhead: null
                 });
               }
               for (let i = 0; i < result.length - 1; ++i) {
@@ -96,6 +97,21 @@ export default function(options: GetSignalConfigOptions, settings: GetSignalConf
                   result[i + 1]
                 );
               }
+                let announceBlocksAhead = -1
+                for (let i = options.signalsCount.value - 1; i >= 0; --i) {
+                    const signal = signals.value[i]
+                    const data = result[i]
+                    if (data.direction == RouteDirection.Divert) {
+                        announceBlocksAhead = 0
+                    }
+                    else {
+                    if (announceBlocksAhead >=0) {
+                        announceBlocksAhead++
+                        data.announceBlocksAhead = announceBlocksAhead
+                    }
+                    }
+                                
+                }
               return result;
         })
     }
