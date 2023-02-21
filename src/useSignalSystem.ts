@@ -98,6 +98,7 @@ export default function(options: GetSignalConfigOptions, settings: GetSignalConf
                 );
               }
                 let announceBlocksAhead = -1
+                let announceGradeTimeOn = -1
                 for (let i = options.signalsCount.value - 1; i >= 0; --i) {
                     const signal = signals.value[i]
                     const data = result[i]
@@ -105,12 +106,27 @@ export default function(options: GetSignalConfigOptions, settings: GetSignalConf
                         announceBlocksAhead = 0
                     }
                     else {
-                    if (announceBlocksAhead >=0) {
-                        announceBlocksAhead++
-                        data.announceBlocksAhead = announceBlocksAhead
+                      if (announceBlocksAhead >=0) {
+                          announceBlocksAhead++
+                          data.announceBlocksAhead = announceBlocksAhead
+                      }
                     }
+                    if (!options.isUniform) {
+                      data.announceGradeTimerOn = false
                     }
-                                
+                    if (data.gradeTimerOn && data.blocksClear < 1) {
+                      announceGradeTimeOn = 0
+                    }
+                    else {
+                      announceGradeTimeOn++                      
+                    }
+                    if (announceGradeTimeOn > 0 && announceGradeTimeOn < 4) {
+                      if (options.isUniform) {
+                        data.gradeTimerOn = true
+                      } else {
+                        data.announceGradeTimerOn = true
+                      }
+                    }                                
                 }
               return result;
         })
