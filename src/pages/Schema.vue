@@ -36,17 +36,11 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import Signal from "../components/Signal.vue";
-import { RouteDirection, SignalConfig, SignalData } from "../types";
-import useSignal from "../useSignal";
-
-const { checkCanPass } = useSignal();
+import useSignalSystem from '../useSignalSystem'
 
 const COUNT = 20;
-
 const signalType = ref('normal');
-
 const isUniform = computed(() => signalType.value.includes('uniform'))
-
 const blocked = ref(new Array(COUNT).fill(false));
 const hasRouteHead = ref(new Array(COUNT).fill(false));
 const diversion = ref(new Array(COUNT).fill(false));
@@ -56,78 +50,24 @@ const hasGradeTimerHead = ref(new Array(COUNT).fill(false));
 const gradeTimerOn = ref(new Array(COUNT).fill(false));
 const canPassRed = ref(new Array(COUNT).fill(false));
 
-const signals = computed(() => {
-  const model: SignalConfig = {
-    isBrl: signalType.value == 'brl',
-    isUniform: isUniform.value,
-    isUniformSmart: signalType.value == 'uniformSmart',
-    hasRouteHead: false,
-    isRouteAnnouce: false,
-    isGradeTimerAnnounce: false,
-    hasTrackLimitHead: false,
-    hasGradeTimerHead: false,
-    sign: "",
-  };
+const { getSignalConfigs, getSignalData } = useSignalSystem({
+  signalType,
+  isUniform,
+  signalsCount: ref(COUNT)
+}, {
+  hasRouteHead,
+  hasTrackLimitHead,
+  hasGradeTimerHead,
+  blocked,
+  canPassRed,
+  diversion,
+  gradeTimerOn,
+  slowTrack
+})
 
-  const result: SignalConfig[] = [];
-  for (let i = 0; i < COUNT; ++i) {
-    result.push({
-      ...model,
-      hasRouteHead: hasRouteHead.value[i],
-      hasTrackLimitHead: hasTrackLimitHead.value[i],
-      hasGradeTimerHead: hasGradeTimerHead.value[i],
-      isRouteAnnouce: hasRouteHead.value[i + 1],
-      isGradeTimerAnnounce: hasGradeTimerHead.value[i + 1],
-      sign:
-        (hasRouteHead.value[i + 1] ? "A" : "") +
-        (hasGradeTimerHead.value[i + 1] ? "S" : ""),
-    });
-  }
-  return result;
-});
+const signals = getSignalConfigs();
+const data = getSignalData(signals);
 
-const data = computed(() => {
-  const getBlocksAhead = (blocked: boolean[], index: number) => {
-    let result = 0;
-    for (let i = index; i <= COUNT; ++i) {
-      if (blocked[i]) {
-        break;
-      }
-      result++;
-    }
-    return result;
-  };
-
-  const result: SignalData[] = [];
-  for (let i = 0; i < signals.value.length; ++i) {
-    const blocksAhead = getBlocksAhead(blocked.value, i);
-    result.push({
-      blocksClear: blocksAhead,
-      canPassRed: canPassRed.value[i],
-      direction: diversion.value[i]
-        ? RouteDirection.Divert
-        : RouteDirection.Straight,
-      announceDirection: signals.value[i].isRouteAnnouce
-        ? diversion.value[i + 1]
-          ? RouteDirection.Divert
-          : RouteDirection.Straight
-        : RouteDirection.None,
-      gradeTimerOn: gradeTimerOn.value[i],
-      slowTrack: slowTrack.value[i],
-      announceGradeTimerOn: signals.value[i].isGradeTimerAnnounce
-        ? gradeTimerOn.value[i + 1]
-        : false,
-      canPassNextSignal: false,
-    });
-  }
-  for (let i = 0; i < result.length - 1; ++i) {
-    result[i].canPassNextSignal = checkCanPass(
-      signals.value[i + 1],
-      result[i + 1]
-    );
-  }
-  return result;
-});
 </script>
 
 <style scoped>
