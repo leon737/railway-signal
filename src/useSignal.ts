@@ -91,31 +91,33 @@ export default function () {
         case HeadType.RouteAnnouce:
           return [
             makeLight(
+              GREEN,
+              isRouteAnnounceLightOn(
+                config.value,
+                data.value,
+                RouteDirection.Divert,
+                data.value.announceBlocksAhead || 0
+              ),
+              isRouteAnnounceLightFlashing(
+                config.value,
+                data.value,
+                RouteDirection.None
+              )
+            ),
+            makeLight(
               YELLOW,
               isRouteAnnounceLightOn(
                 config.value,
                 data.value,
-                RouteDirection.Divert
+                RouteDirection.Divert,
+                0
               ),
               isRouteAnnounceLightFlashing(
                 config.value,
                 data.value,
                 RouteDirection.Divert
               )
-            ),
-            makeLight(
-              RED,
-              isRouteAnnounceLightOn(
-                config.value,
-                data.value,
-                RouteDirection.None
-              ),
-              isRouteAnnounceLightFlashing(
-                config.value,
-                data.value,
-                RouteDirection.None
-              )
-            ),
+            ),            
           ];
         case HeadType.Speed:
             return [
@@ -259,20 +261,26 @@ export default function () {
   const isRouteAnnounceLightOn = (
     config: SignalConfig,
     data: SignalData,
-    direction: RouteDirection
+    direction: RouteDirection,
+    divertAnnounceBlocksAhead: number
   ): boolean => {
     const canPass = checkCanPass(config, data);
     switch (direction) {
-      case RouteDirection.None:
-        return !data.canPassNextSignal && canPass;
       case RouteDirection.Straight:
         return false;
       case RouteDirection.Divert:
-        return (
-          data.announceDirection == RouteDirection.Divert &&
-          (data.blocksClear > 1 || canPass) &&
-          data.canPassNextSignal
-        );
+        if (!divertAnnounceBlocksAhead) {
+          return (
+            data.announceDirection == RouteDirection.Divert &&
+            (data.blocksClear > 1 || canPass) &&
+            data.canPassNextSignal
+          );
+        }
+        else {
+          return divertAnnounceBlocksAhead > 1
+        }
+      default:
+        return false;
     }
   };
 

@@ -44,7 +44,7 @@ export default function(options: GetSignalConfigOptions, settings: GetSignalConf
               hasRouteHead: settings.hasRouteHead.value[i],
               hasTrackLimitHead: settings.hasTrackLimitHead.value[i],
               hasGradeTimerHead: settings.hasGradeTimerHead.value[i],
-              isRouteAnnouce: settings.hasRouteHead.value[i + 1],
+              isRouteAnnouce: settings.hasRouteHead.value[i + 1] || settings.hasRouteHead.value[i + 2],
               isGradeTimerAnnounce: settings.hasGradeTimerHead.value[i + 1],
               sign:
                 (settings.hasRouteHead.value[i + 1] ? "A" : "") +
@@ -118,7 +118,9 @@ export default function(options: GetSignalConfigOptions, settings: GetSignalConf
                       announceGradeTimeOn = 0
                     }
                     else {
-                      announceGradeTimeOn++                      
+                      if (announceGradeTimeOn >= 0) {
+                        announceGradeTimeOn++          
+                      }            
                     }
                     if (announceGradeTimeOn > 0 && announceGradeTimeOn < 4) {
                       if (options.isUniform) {
