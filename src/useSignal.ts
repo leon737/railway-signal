@@ -13,17 +13,18 @@ const YELLOW = "yellow";
 const GREEN = "#0F0";
 const WHITE = "#FFF";
 
-const RED_SPEED_LIGHT = {light: RED, index: 0}
-const YELLOW_SPEED_LIGHT = {light: YELLOW, index: 1}
-const GREEN_SPEED_LIGHT = {light: GREEN, index: 2}
+const RED_SPEED_LIGHT = { light: RED, index: 0 };
+const YELLOW_SPEED_LIGHT = { light: YELLOW, index: 1 };
+const GREEN_SPEED_LIGHT = { light: GREEN, index: 2 };
 
 export default function () {
-  const {getHeads: getUniformHeads, getHead: getUniformHead} = useUniformSignal()
+  const { getHeads: getUniformHeads, getHead: getUniformHead } =
+    useUniformSignal();
 
   const getHeads = (config: Ref<SignalConfig>) => {
     return computed(() => {
       if (config.value.isUniform) {
-        return getUniformHeads(config).value
+        return getUniformHeads(config).value;
       }
       const result: HeadType[] = [];
       if (config.value.hasTrackLimitHead) {
@@ -64,12 +65,17 @@ export default function () {
             ),
           ];
         case HeadType.MiniSpeed:
-            return (config.value.isBrl ? [YELLOW_SPEED_LIGHT, RED_SPEED_LIGHT, GREEN_SPEED_LIGHT] : [GREEN_SPEED_LIGHT, YELLOW_SPEED_LIGHT, RED_SPEED_LIGHT]).map(v => 
-                makeLight(
-                    v.light,
-                    isSpeedLightOn(config.value, data.value, v.index),
-                    isSpeedLightFlashing(config.value, data.value, v.index)
-                ));          
+          return (
+            config.value.isBrl
+              ? [YELLOW_SPEED_LIGHT, RED_SPEED_LIGHT, GREEN_SPEED_LIGHT]
+              : [GREEN_SPEED_LIGHT, YELLOW_SPEED_LIGHT, RED_SPEED_LIGHT]
+          ).map((v) =>
+            makeLight(
+              v.light,
+              isSpeedLightOn(config.value, data.value, v.index),
+              isSpeedLightFlashing(config.value, data.value, v.index)
+            )
+          );
         case HeadType.Route:
           return [
             makeLight(
@@ -91,12 +97,28 @@ export default function () {
         case HeadType.RouteAnnouce:
           return [
             makeLight(
-              GREEN,
+              YELLOW,
               isRouteAnnounceLightOn(
                 config.value,
                 data.value,
                 RouteDirection.Divert,
-                data.value.announceBlocksAhead || 0
+                (config.value.isBrl && data.value.announceBlocksAhead) || 0
+              ),
+              isRouteAnnounceLightFlashing(
+                config.value,
+                data.value,
+                RouteDirection.Divert
+              )
+            ),
+            makeLight(
+              RED,
+              isRouteAnnounceLightOn(
+                config.value,
+                data.value,
+                config.value.isBrl
+                  ? RouteDirection.Divert
+                  : RouteDirection.None,
+                0
               ),
               isRouteAnnounceLightFlashing(
                 config.value,
@@ -104,34 +126,25 @@ export default function () {
                 RouteDirection.None
               )
             ),
-            makeLight(
-              YELLOW,
-              isRouteAnnounceLightOn(
-                config.value,
-                data.value,
-                RouteDirection.Divert,
-                0
-              ),
-              isRouteAnnounceLightFlashing(
-                config.value,
-                data.value,
-                RouteDirection.Divert
-              )
-            ),            
           ];
         case HeadType.Speed:
-            return [
-                makeLight(
-                    RED,
-                    isSpeedLimitExtraRedLightOn(config.value, data.value),
-                    isSpeedLimitExtraRedLightFlashing()
-                  ), 
-                ...(config.value.isBrl ? [YELLOW_SPEED_LIGHT, RED_SPEED_LIGHT, GREEN_SPEED_LIGHT] : [GREEN_SPEED_LIGHT, YELLOW_SPEED_LIGHT, RED_SPEED_LIGHT]).map((v, i) => 
-                makeLight(
-                    v.light,
-                    isSpeedLightOn(config.value, data.value, v.index),
-                    isSpeedLightFlashing(config.value, data.value, v.index)
-                ))];          
+          return [
+            makeLight(
+              RED,
+              isSpeedLimitExtraRedLightOn(config.value, data.value),
+              isSpeedLimitExtraRedLightFlashing()
+            ),
+            ...(config.value.isBrl
+              ? [YELLOW_SPEED_LIGHT, RED_SPEED_LIGHT, GREEN_SPEED_LIGHT]
+              : [GREEN_SPEED_LIGHT, YELLOW_SPEED_LIGHT, RED_SPEED_LIGHT]
+            ).map((v, i) =>
+              makeLight(
+                v.light,
+                isSpeedLightOn(config.value, data.value, v.index),
+                isSpeedLightFlashing(config.value, data.value, v.index)
+              )
+            ),
+          ];
         case HeadType.GradeTime:
           return [
             makeLight(
@@ -180,13 +193,15 @@ export default function () {
       ? Math.max(Math.min(data.blocksClear, 6), 0)
       : Math.max(Math.min(data.blocksClear, 2), 0);
     if (config.isBrl) {
-        if (blocksClear == 5) {
-            return index == GREEN_SPEED_LIGHT.index || index == YELLOW_SPEED_LIGHT.index
-        }
-        if (blocksClear > 5) {
-            return index == GREEN_SPEED_LIGHT.index
-        }
-        return Math.floor(blocksClear / 2) == index;
+      if (blocksClear == 5) {
+        return (
+          index == GREEN_SPEED_LIGHT.index || index == YELLOW_SPEED_LIGHT.index
+        );
+      }
+      if (blocksClear > 5) {
+        return index == GREEN_SPEED_LIGHT.index;
+      }
+      return Math.floor(blocksClear / 2) == index;
     } else {
       return blocksClear == index;
     }
@@ -266,6 +281,8 @@ export default function () {
   ): boolean => {
     const canPass = checkCanPass(config, data);
     switch (direction) {
+      case RouteDirection.None:
+        return !data.canPassNextSignal && canPass;
       case RouteDirection.Straight:
         return false;
       case RouteDirection.Divert:
@@ -275,9 +292,11 @@ export default function () {
             (data.blocksClear > 1 || canPass) &&
             data.canPassNextSignal
           );
-        }
-        else {
-          return divertAnnounceBlocksAhead > 1
+        } else {
+          return (
+            divertAnnounceBlocksAhead > 1 &&
+            divertAnnounceBlocksAhead < data.blocksClear
+          );
         }
       default:
         return false;
