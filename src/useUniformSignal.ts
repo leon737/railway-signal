@@ -39,26 +39,25 @@ export default function () {
             ? filter(mappings, (x) => !!x.slow)
             : mappings;
         mappings =
+          data.value.direction == RouteDirection.Divert
+            ? fallbackFilter(mappings, (x) => !!x.divert)
+            : mappings;
+        mappings =
+          !!data.value.announceBlocksAhead &&
+          data.value.announceBlocksAhead < data.value.blocksClear
+            ? fallbackFilter(
+                mappings,
+                (x) => x.announce === data.value.announceBlocksAhead
+              )
+            : mappings;
+        mappings =
           data.value.gradeTimerOn && data.value.blocksClear != 1
-            ? filter(mappings, (x) => !!x.grade || !!x.timer)
+            ? fallbackFilter(mappings, (x) => !!x.grade || !!x.timer)
             : mappings;
         if (!mappings.length) {
           blocksClear--;
         }
       } while (!mappings.length && blocksClear >= 0);
-
-      mappings =
-        data.value.direction == RouteDirection.Divert
-          ? fallbackFilter(mappings, (x) => !!x.divert)
-          : mappings;
-      mappings =
-        !!data.value.announceBlocksAhead &&
-        data.value.announceBlocksAhead < data.value.blocksClear
-          ? fallbackFilter(
-              mappings,
-              (x) => x.announce === data.value.announceBlocksAhead
-            )
-          : mappings;
 
       const mapping = mappings.length > 0 ? mappings[0] : Uniform5Mapping[0];
       const code = mapping.code;
